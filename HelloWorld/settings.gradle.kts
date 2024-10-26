@@ -9,8 +9,10 @@ pluginManagement {
         }
         // Chaquopyリポジトリ
         maven(url = "https://chaquo.com/maven")
+        maven { url = uri("https://plugins.gradle.org/m2/") }
         // Maven Centralリポジトリ
         mavenCentral()
+        google()
         // Gradleプラグインポータル
         gradlePluginPortal()
         // JitPackリポジトリ
@@ -32,4 +34,3 @@ rootProject.name = "HelloWorld"
 
 // サブプロジェクトのインクルード
 include(":app")
-include(":opencv4")

@@ -19,7 +19,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HelloWorld"
-        android:name="com.chaquo.python.android.PyApplication"
+
         tools:targetApi="33">
 
         <!-- SecondActivityを最初の画面として設定 -->

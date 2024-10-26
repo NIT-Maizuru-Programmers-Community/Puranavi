@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package com.larswerkman.holocolorpicker;
+package com.example.helloworld;
+
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -30,8 +31,6 @@ import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-
-import com.larswerkman.holocolorpicker.R;
 
 public class SVBar extends View {
 
@@ -494,12 +493,9 @@ public class SVBar extends View {
 	 * WARNING: Don't change the color picker. it is done already when the bar
 	 * is added to the ColorPicker
 	 * 
-	 * @see com.larswerkman.holocolorpicker.ColorPicker#addSVBar(SVBar)
+	 * @see com.example.helloworld.ColorPicker#addSVBar(SVBar)
 	 * @param picker
 	 */
-	public void setColorPicker(ColorPicker picker) {
-		mPicker = picker;
-	}
 
 	@Override
 	protected Parcelable onSaveInstanceState() {
@@ -532,5 +528,8 @@ public class SVBar extends View {
 		} else {
 			setValue(savedState.getFloat(STATE_VALUE));
 		}
+	}
+
+	public void setColorPicker(com.example.helloworld.ColorPicker colorPicker) {
 	}
 }

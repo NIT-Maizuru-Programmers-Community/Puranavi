@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.larswerkman.holocolorpicker;
+package com.example.helloworld;
 
 import android.content.Context;
 import android.content.res.Resources;
