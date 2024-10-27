@@ -25,8 +25,6 @@ import com.squareup.picasso.Picasso
 
 
 class MainActivity : ComponentActivity() {
-
-
     private lateinit var imageView: ImageView
     private lateinit var selectImageBtn: Button
     private lateinit var postIdInput: EditText
@@ -101,9 +99,17 @@ class MainActivity : ComponentActivity() {
 
         dotButton.setOnClickListener {
             val drawable = imageView.drawable
-            val intent = Intent(this,CheckActivity::class.java)
             if (drawable is BitmapDrawable) {
-                startActivity(intent)
+                val bitmap = drawable.bitmap
+                val uri = saveBitmapToFile(bitmap)  // 画像を一時ファイルに保存
+
+                if (uri != null) {
+                    val intent = Intent(this, CheckActivity::class.java)
+                    intent.putExtra("imageUri", uri.toString())  // URIをインテントで渡す
+                    startActivity(intent)
+                } else {
+                    Toast.makeText(this, "画像の保存に失敗しました", Toast.LENGTH_SHORT).show()
+                }
             } else {
                 Toast.makeText(this, "画像が選択されていません", Toast.LENGTH_SHORT).show()
             }

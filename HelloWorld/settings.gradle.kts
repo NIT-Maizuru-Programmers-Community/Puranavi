@@ -15,5 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "HelloWorld"
-include(":app")
-include(":Puranabi")
+include(":app",":opencv")

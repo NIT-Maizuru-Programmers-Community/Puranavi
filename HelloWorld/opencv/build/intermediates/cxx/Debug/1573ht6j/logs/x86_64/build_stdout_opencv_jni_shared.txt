@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\syake\GitHub\NeoPainting\HelloWorld\opencv\.cxx\Debug\1573ht6j\x86_64'
+ninja: no work to do.

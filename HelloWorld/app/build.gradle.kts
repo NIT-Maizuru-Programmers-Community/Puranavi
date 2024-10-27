@@ -72,6 +72,7 @@ dependencies {
     implementation("com.google.firebase:firebase-database:21.0.0")
 
     implementation(project(":Puranabi"))
+    implementation(project(":opencv"))
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
