@@ -22,14 +22,24 @@ import com.google.firebase.database.FirebaseDatabase
 import com.squareup.picasso.Picasso
 import java.io.File
 import java.io.FileOutputStream
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import android.graphics.Color
+import android.widget.EditText
+import android.widget.TextView
+import java.io.File
+import java.io.FileOutputStream
+import com.squareup.picasso.Picasso
+
 
 class MainActivity : ComponentActivity() {
-
     private lateinit var imageView: ImageView
     private lateinit var selectImageBtn: Button
     private lateinit var postIdInput: EditText
     private lateinit var targetAmountTextView: TextView
     private lateinit var databaseReference: DatabaseReference
+
 
     private lateinit var tiles: List<Tile>
     private var originalBitmap: Bitmap? = null
@@ -94,7 +104,6 @@ class MainActivity : ComponentActivity() {
                         } else {
                             Toast.makeText(this, "目標金額が存在しません", Toast.LENGTH_SHORT).show()
                         }
-
                     } else {
                         // データが存在しない場合のエラーメッセージ
                         Toast.makeText(this, "指定されたPost IDのデータが見つかりません", Toast.LENGTH_SHORT).show()
