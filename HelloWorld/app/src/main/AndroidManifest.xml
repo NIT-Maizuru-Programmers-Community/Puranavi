@@ -43,7 +43,8 @@
             android:name=".MainActivity"/>
         <activity
             android:name=".PaintingActivity"/>
-
+        <activity
+            android:name=".CheckActivity" />
     </application>
 
 </manifest>

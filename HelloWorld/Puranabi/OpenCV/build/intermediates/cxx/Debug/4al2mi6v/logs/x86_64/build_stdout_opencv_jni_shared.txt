@@ -1,0 +1,2 @@
+ninja: Entering directory `C:\Users\syake\GitHub\Puranabi_OpenCV\Puranabi\opencv\.cxx\Debug\4al2mi6v\x86_64'
+ninja: no work to do.
