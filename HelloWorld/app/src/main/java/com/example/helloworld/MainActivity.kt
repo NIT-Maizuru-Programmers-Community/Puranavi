@@ -3,15 +3,25 @@ package com.example.helloworld
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.view.MotionEvent
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.squareup.picasso.Picasso
+import java.io.File
+import java.io.FileOutputStream
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -24,13 +34,17 @@ import com.squareup.picasso.Picasso
 
 
 class MainActivity : ComponentActivity() {
-
-
     private lateinit var imageView: ImageView
     private lateinit var selectImageBtn: Button
     private lateinit var postIdInput: EditText
     private lateinit var targetAmountTextView: TextView
     private lateinit var databaseReference: DatabaseReference
+
+
+    private lateinit var tiles: List<Tile>
+    private var originalBitmap: Bitmap? = null
+    private var selectedColor: Int = Color.RED // デフォルトの選択色
+    private lateinit var paint: Paint // Paintオブジェクトを追加
 
     companion object {
         const val REQUEST_IMAGE_PICK = 1
@@ -44,12 +58,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Paintオブジェクトの初期化
+        paint = Paint().apply {
+            style = Paint.Style.FILL // 塗りつぶしスタイルを設定
+        }
+
         // Firebaseから目標金額を取得
         database = FirebaseDatabase.getInstance().getReference("savingsGoal")
 
         val dotButton = findViewById<Button>(R.id.dotButton)
         val paintButton = findViewById<Button>(R.id.paintButton)
-
 
         // UI要素の初期化
         imageView = findViewById(R.id.imageView)  // 画像を表示するImageView
@@ -75,6 +93,7 @@ class MainActivity : ComponentActivity() {
                         // 画像URLが存在する場合、Picassoで画像をImageViewに表示
                         if (imageUrl != null) {
                             Picasso.get().load(imageUrl).into(imageView)
+                            loadImageBitmap(imageUrl) // 画像をBitmapとして読み込む
                         } else {
                             Toast.makeText(this, "画像のURLが存在しません", Toast.LENGTH_SHORT).show()
                         }
@@ -85,12 +104,11 @@ class MainActivity : ComponentActivity() {
                         } else {
                             Toast.makeText(this, "目標金額が存在しません", Toast.LENGTH_SHORT).show()
                         }
-
                     } else {
                         // データが存在しない場合のエラーメッセージ
                         Toast.makeText(this, "指定されたPost IDのデータが見つかりません", Toast.LENGTH_SHORT).show()
                     }
-                }.addOnFailureListener {exception ->
+                }.addOnFailureListener { exception ->
                     // データ取得に失敗した場合のエラーメッセージ
                     Toast.makeText(this, "データの取得に失敗しました: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
@@ -129,13 +147,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // ギャラリーから画像を選択
-    private fun selectImageFromGallery() {
-        val intent = Intent(Intent.ACTION_PICK)
-        intent.type = "image/*"
-        startActivityForResult(intent, REQUEST_IMAGE_PICK)
-    }
-
     // 選択された画像を処理
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -145,6 +156,7 @@ class MainActivity : ComponentActivity() {
                 val inputStream = contentResolver.openInputStream(selectedImageUri)
                 val selectedImage = BitmapFactory.decodeStream(inputStream)
                 imageView.setImageBitmap(selectedImage)
+                originalBitmap = selectedImage // 元のビットマップを保持
             } else {
                 Toast.makeText(this, "画像の選択に失敗しました", Toast.LENGTH_SHORT).show()
             }
@@ -156,6 +168,7 @@ class MainActivity : ComponentActivity() {
         val width = bitmap.width
         val height = bitmap.height
         val dotBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val tileList = mutableListOf<Tile>() // タイルを保持するリスト
 
         for (y in 0 until height step dotSize) {
             for (x in 0 until width step dotSize) {
@@ -172,8 +185,11 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+                // タイルをリストに追加
+                tileList.add(Tile(RectF(x.toFloat(), y.toFloat(), (x + dotSize).toFloat(), (y + dotSize).toFloat())))
             }
         }
+        tiles = tileList // タイルのリストを保持
         return dotBitmap
     }
 
@@ -189,5 +205,51 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
             null
         }
+    }
+
+    // タッチイベントを処理するメソッド
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            val x = event.x
+            val y = event.y
+
+            // タイルをタッチした場合の処理
+            for (tile in tiles) {
+                if (tile.rect.contains(x, y)) {
+                    tile.color = selectedColor // 塗りつぶしの色を設定
+                    tile.isFilled = true // 塗られたことを記録
+                    break
+                }
+            }
+
+            // 塗りつぶした結果を再描画
+            redrawTiles()
+            return true
+        }
+        return super.onTouchEvent(event)
+    }
+
+    // タイルを再描画するメソッド
+    private fun redrawTiles() {
+        if (originalBitmap == null) {
+            Toast.makeText(this, "画像が読み込まれていません", Toast.LENGTH_SHORT).show()
+            return // originalBitmapがnullの場合は早期リターン
+        }
+
+        val canvas = Canvas(originalBitmap!!)
+        for (tile in tiles) {
+            if (tile.isFilled) {
+                canvas.drawRect(tile.rect, paint.apply { color = tile.color }) // タイルを描画
+            }
+        }
+        imageView.setImageBitmap(originalBitmap) // 再描画したBitmapをImageViewにセット
+    }
+
+
+    // 画像をBitmapとして読み込むメソッド
+    private fun loadImageBitmap(imageUrl: String) {
+        // 画像をダウンロードしてBitmapに変換する処理をここに実装
+        // 例: Picassoや他のライブラリを使ってBitmapを取得
+        Picasso.get().load(imageUrl).into(imageView) // ここは簡略化
     }
 }
