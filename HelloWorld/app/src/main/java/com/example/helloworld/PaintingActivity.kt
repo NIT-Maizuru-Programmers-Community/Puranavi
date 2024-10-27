@@ -2,7 +2,9 @@ package com.example.helloworld
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
@@ -39,10 +41,12 @@ class PaintingActivity : AppCompatActivity() {
             drawingView.changeColor(currentColor)  // 色を変更する
         }
 
-        // ビットマップを受け取る
-        val selectedBitmap = intent.getParcelableExtra<Bitmap>(MainActivity.EXTRA_DOT_IMAGE)
-        selectedBitmap?.let {
-            drawingView.loadBitmap(it) // DrawingViewにBitmapを読み込む
+        // URIを受け取る
+        val uriString = intent.getStringExtra(MainActivity.EXTRA_DOT_IMAGE)
+        uriString?.let { uri ->
+            val inputStream = contentResolver.openInputStream(Uri.parse(uri))
+            val selectedBitmap = BitmapFactory.decodeStream(inputStream)
+            drawingView.loadBitmap(selectedBitmap) // DrawingViewにBitmapを読み込む
         }
 
         // 色確定ボタン

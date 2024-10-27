@@ -5,7 +5,6 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.ContextCompat
 
 class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
@@ -37,20 +36,22 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> path.moveTo(x, y)
             MotionEvent.ACTION_MOVE -> path.lineTo(x, y)
+            MotionEvent.ACTION_UP -> {
+                path.lineTo(x, y)
+                // 描画を終了する
+                path.reset()
+            }
         }
-        invalidate()
+        invalidate()  // 再描画
         return true
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
-        // 画像があれば、Canvasに描画
+        // ビットマップがあれば描画
         bitmap?.let {
             canvas.drawBitmap(it, 0f, 0f, bitmapPaint)
         }
-
-        // パスを描画
-        canvas.drawPath(path, paint)
+        canvas.drawPath(path, paint)  // 現在のパスを描画
     }
 }

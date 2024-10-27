@@ -76,4 +76,7 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.3")
+
+    // Picasso（画像ライブラリ）
+    implementation("com.squareup.picasso:picasso:2.8") // Picasso
 }
