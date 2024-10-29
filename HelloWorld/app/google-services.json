@@ -1,15 +1,35 @@
 {
   "project_info": {
     "project_number": "745033722684",
+    "firebase_url": "https://plannavi-d19d3-default-rtdb.firebaseio.com/",
     "project_id": "plannavi-d19d3",
     "storage_bucket": "plannavi-d19d3.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:745033722684:android:5f75046854c0bd95dacc39",
+        "mobilesdk_app_id": "1:745033722684:android:da2c09cadea61d82dacc39",
         "android_client_info": {
           "package_name": "com.example.helloworld"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPC03fY1E0AtTWjyT0g5kRAtNPrnlbNnY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:745033722684:android:5f75046854c0bd95dacc39",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
         }
       },
       "oauth_client": [],

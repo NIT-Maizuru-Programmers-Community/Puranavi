@@ -61,6 +61,8 @@
         android:layout_marginTop="16dp" />
 
     <!-- 右側のDrawing View -->
+
+    <!-- 完成ボタン -->
     <com.example.helloworld.DrawingView
         android:id="@+id/drawingView"
         android:layout_width="0dp"
@@ -69,9 +71,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="0.6"
         app:layout_constraintStart_toEndOf="@id/color_picker"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
 
-    <!-- 完成ボタン -->
     <Button
         android:id="@+id/completeButton"
         android:layout_width="wrap_content"
@@ -84,4 +86,43 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.676" />
+
+    <TextView
+        android:id="@+id/money"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="テキスト待機中"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:id="@+id/dotart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        />
+
+
+    <ProgressBar
+        android:id="@+id/savingsProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:scaleX="12"
+        android:scaleY="10"
+        android:layout_marginEnd="76dp"
+        android:indeterminate="false"
+        android:indeterminateTint="@color/purple_200"
+        android:max="2000"
+        android:progressTint="@color/black"
+        android:rotation="270"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -21,14 +21,21 @@ import org.opencv.core.Mat
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import java.io.FileNotFoundException
+import android.os.Environment
+import java.io.File
+import java.io.FileOutputStream
 
 class CheckActivity : ComponentActivity() {
 
     private val REQUEST_WRITE_STORAGE = 112
+    private var processedBitmap: Bitmap? = null // クラスのプロパティとして宣言
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_check)
+
+        val imageView: ImageView = findViewById(R.id.imageView) // 画像を表示するImageViewを取得
+        val targetAmount = intent.getIntExtra("targetAmount", 0) // 前の画面のtargetAmountを取得
 
         // ストレージの書き込み権限を確認
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -44,9 +51,6 @@ class CheckActivity : ComponentActivity() {
             Toast.makeText(this, "OpenCVの読み込みに失敗しました", Toast.LENGTH_SHORT).show()
         }
 
-        // 画像を表示するImageViewを取得
-        val imageView: ImageView = findViewById(R.id.imageView)
-
         // インテントから画像URIを取得
         val imageUri = intent.getStringExtra("imageUri")
         if (imageUri != null) {
@@ -55,7 +59,7 @@ class CheckActivity : ComponentActivity() {
                 val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(Uri.parse(imageUri)))
 
                 // OpenCV処理の適用
-                val processedBitmap = processImage(bitmap)
+                processedBitmap = processImage(bitmap)
                 imageView.setImageBitmap(processedBitmap)
 
             } catch (e: FileNotFoundException) {
@@ -67,14 +71,18 @@ class CheckActivity : ComponentActivity() {
 
         // btnOKボタンを取得
         val btnOK: Button = findViewById(R.id.btnOK)
-        btnOK.setOnClickListener {
-            // Paintingアクティビティに遷移
-            val intent = Intent(this, PaintingActivity::class.java)
-            startActivity(intent)
+        btnOK.setOnClickListener { // Paintingアクティビティに遷移
+            processedBitmap?.let { bitmap ->
+                val processedImageUri = saveBitmapToFile(bitmap)
+                val intent = Intent(this, PaintingActivity::class.java)
+                intent.putExtra("imageUri", processedImageUri.toString())
+                intent.putExtra("targetAmount", targetAmount) // 次の画面にtargetAmountを渡す
+                startActivity(intent)
+            } ?: Toast.makeText(this, "画像が処理されていません", Toast.LENGTH_SHORT).show()
         }
 
-        val btnNO:Button = findViewById(R.id.btnNO)
-        btnNO.setOnClickListener{
+        val btnNO: Button = findViewById(R.id.btnNO)
+        btnNO.setOnClickListener {
             finish()
         }
     }
@@ -141,5 +149,15 @@ class CheckActivity : ComponentActivity() {
         Utils.matToBitmap(resultMat, resultBitmap)
 
         return resultBitmap
+    }
+
+    // Bitmapを保存するメソッド
+    private fun saveBitmapToFile(bitmap: Bitmap): Uri {
+        val file = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "processed_image.png")
+        val outputStream = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        outputStream.flush()
+        outputStream.close()
+        return Uri.fromFile(file)
     }
 }

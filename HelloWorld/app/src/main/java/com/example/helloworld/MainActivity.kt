@@ -23,15 +23,6 @@ import com.google.firebase.database.FirebaseDatabase
 import com.squareup.picasso.Picasso
 import java.io.File
 import java.io.FileOutputStream
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import android.graphics.Color
-import android.widget.EditText
-import android.widget.TextView
-import java.io.File
-import java.io.FileOutputStream
-import com.squareup.picasso.Picasso
 
 
 class MainActivity : ComponentActivity() {
@@ -68,8 +59,6 @@ class MainActivity : ComponentActivity() {
         database = FirebaseDatabase.getInstance().getReference("savingsGoal")
 
         val dotButton = findViewById<Button>(R.id.dotButton)
-
-        val paintButton = findViewById<Button>(R.id.paintButton)
 
         // UI要素の初期化
         imageView = findViewById(R.id.imageView)  // 画像を表示するImageView
@@ -127,8 +116,14 @@ class MainActivity : ComponentActivity() {
                 val uri = saveBitmapToFile(bitmap)  // 画像を一時ファイルに保存
 
                 if (uri != null) {
+                    // TextViewから目標金額の整数を取得
+                    val targetAmount = targetAmountTextView.text.toString().replace("目標金額: ", "").replace(" 円", "").toIntOrNull() ?: 0
+
+                    // CheckActivityに渡すIntentを作成
                     val intent = Intent(this, CheckActivity::class.java)
+                    intent.putExtra("targetAmount", targetAmount)  // 目標金額を次のアクティビティに渡す
                     intent.putExtra("imageUri", uri.toString())  // URIをインテントで渡す
+
                     startActivity(intent)
                 } else {
                     Toast.makeText(this, "画像の保存に失敗しました", Toast.LENGTH_SHORT).show()
@@ -137,6 +132,7 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, "画像が選択されていません", Toast.LENGTH_SHORT).show()
             }
         }
+
     }
 
     // 選択された画像を処理
