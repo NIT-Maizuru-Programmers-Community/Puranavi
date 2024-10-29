@@ -1,8 +1,8 @@
+// アプリレベルの build.gradle.kts ファイル
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    //id("com.chaquo.python") version "15.0.1"
-    id("com.google.gms.google-services") // Firebaseプラグイン
+    id("org.jetbrains.kotlin.android")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -22,7 +22,6 @@ android {
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
-        //buildConfigField("String", "PYTHON_EXECUTABLE", "\"C:/Users/syake/AppData/Local/Programs/Python/Python312/python.exe\"")
     }
 
     buildTypes {
@@ -57,7 +56,6 @@ android {
     }
 }
 
-
 dependencies {
     implementation("androidx.activity:activity-compose:1.9.2")
     implementation("androidx.compose.ui:ui:1.7.3")
@@ -68,10 +66,13 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.appcompat:appcompat:1.5.1")
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0") // 適切なバージョンに更新
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.0")
 
     implementation("com.larswerkman:HoloColorPicker:1.5")
     implementation("com.google.firebase:firebase-database:21.0.0")
+
+    implementation(project(":Puranabi"))
+    implementation(project(":opencv"))
 
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.3")
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")

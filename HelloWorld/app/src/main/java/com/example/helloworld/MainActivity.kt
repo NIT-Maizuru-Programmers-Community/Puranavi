@@ -15,6 +15,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import com.google.firebase.database.DatabaseReference
@@ -67,6 +68,7 @@ class MainActivity : ComponentActivity() {
         database = FirebaseDatabase.getInstance().getReference("savingsGoal")
 
         val dotButton = findViewById<Button>(R.id.dotButton)
+
         val paintButton = findViewById<Button>(R.id.paintButton)
 
         // UI要素の初期化
@@ -121,28 +123,18 @@ class MainActivity : ComponentActivity() {
         dotButton.setOnClickListener {
             val drawable = imageView.drawable
             if (drawable is BitmapDrawable) {
-                val currentBitmap = drawable.bitmap
-                val dotBitmap = createDotImage(currentBitmap)
-                imageView.setImageBitmap(dotBitmap)
-            } else {
-                Toast.makeText(this, "画像が選択されていません", Toast.LENGTH_SHORT).show()
-            }
-        }
+                val bitmap = drawable.bitmap
+                val uri = saveBitmapToFile(bitmap)  // 画像を一時ファイルに保存
 
-        paintButton.setOnClickListener {
-            val drawable = imageView.drawable
-            if (drawable is BitmapDrawable) {
-                val dotBitmap = createDotImage(drawable.bitmap) // ドット絵を作成
-                val uri = saveBitmapToFile(dotBitmap) // Bitmapをファイルとして保存しURIを取得
                 if (uri != null) {
-                    val intent = Intent(this, PaintingActivity::class.java)
-                    intent.putExtra(EXTRA_DOT_IMAGE, uri.toString()) // URIを渡す
+                    val intent = Intent(this, CheckActivity::class.java)
+                    intent.putExtra("imageUri", uri.toString())  // URIをインテントで渡す
                     startActivity(intent)
                 } else {
-                    Toast.makeText(this, "ドット絵の保存に失敗しました", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "画像の保存に失敗しました", Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(this, "ドット絵を作成するには画像を選択してください", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "画像が選択されていません", Toast.LENGTH_SHORT).show()
             }
         }
     }

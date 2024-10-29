@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">HelloWorld</string>
+    <string name="opencv_version_text">OpenCV Version: %1$s</string>
+    <string name="opencv_load_failed_text">Failed to load OpenCV</string>
+    <string name="image_loading_failed">画像の読み込みに失敗しました。</string>
+    <string name="image_not_passed">画像が渡されていません</string>
 </resources>
