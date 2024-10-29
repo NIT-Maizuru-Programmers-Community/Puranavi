@@ -78,6 +78,9 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.3")
 
-    // Picasso
-    implementation("com.squareup.picasso:picasso:2.8")
+    implementation ("com.google.firebase:firebase-storage-ktx:20.3.0") // 最新のバージョンを確認して使用
+    implementation ("com.google.firebase:firebase-database-ktx:20.3.0") // Realtime Database
+
+    // Picasso（画像ライブラリ）
+    implementation("com.squareup.picasso:picasso:2.8") // Picasso
 }
