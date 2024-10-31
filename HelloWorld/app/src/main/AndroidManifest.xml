@@ -40,7 +40,8 @@
             android:name=".CheckActivity" />
         <activity
             android:name=".DrawingView" />
-
+        <activity
+            android:name=".Result" />
     </application>
 
 </manifest>

@@ -28,6 +28,13 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Socket
 import java.net.SocketTimeoutException
+import android.content.Intent
+import com.squareup.picasso.Picasso
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
+import android.graphics.drawable.Drawable
+import android.util.Log
 
 class PaintingActivity : AppCompatActivity() {
     private lateinit var textView: TextView
@@ -40,6 +47,7 @@ class PaintingActivity : AppCompatActivity() {
     private var currentColor: Int = Color.BLACK
     private lateinit var drawingView: DrawingView
     private lateinit var completeButton: Button
+    private lateinit var deathbutton:Button
 
     // Firebase Realtime Database と Firebase Storage の参照を保持
     private lateinit var database: DatabaseReference
@@ -64,22 +72,34 @@ class PaintingActivity : AppCompatActivity() {
         savingsProgressBar = findViewById(R.id.savingsProgressBar)
 
         drawingView = findViewById(R.id.drawingView)
+        deathbutton = findViewById(R.id.btndeath)
         completeButton = findViewById(R.id.completeButton)  // 完成ボタンを取得
         val colorPicker = findViewById<ColorPicker>(R.id.color_picker)
         val svBar = findViewById<SVBar>(R.id.svbar)
         val opacityBar = findViewById<OpacityBar>(R.id.opacitybar)
         val saturationBar = findViewById<SaturationBar>(R.id.saturationbar)
         val confirmButton = findViewById<Button>(R.id.confirm_button)
-        val imageUri = intent.getStringExtra("imageUri")//前の画面で作った画像を取得
+        val imageUri = intent.getStringExtra("imageUri") //前の画面で作った画像を取得
+
+        drawingView.bringToFront() //DrawingViewを最前列に!!
 
         if (imageUri != null) {
-            val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(Uri.parse(imageUri)))
-            imageView.setImageBitmap(bitmap)
+            Glide.with(this)
+                .asBitmap() // Bitmap形式で読み込む
+                .load(Uri.parse(imageUri))
+                .into(object : CustomTarget<Bitmap>() {
+                    override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                        drawingView.loadBitmap(resource) // DrawingViewにBitmapを読み込む
+                    }
+                    override fun onLoadCleared(placeholder: Drawable?) {
+                        // 必要に応じてリソースを解放する処理
+                    }
+                })
         } else {
             Toast.makeText(this, "画像の読み込みに失敗しました", Toast.LENGTH_SHORT).show()
         }
 
-        targetAmount = intent.getIntExtra("targetAmount",0) //前の画面のtargetAmountを取得
+        targetAmount = intent.getIntExtra("targetAmount", 0) //前の画面のtargetAmountを取得
         accumulatedData = 0 //目標金額の初期設定
 
         // ネットワーク操作を許可する（デモ用の実装）
@@ -102,8 +122,9 @@ class PaintingActivity : AppCompatActivity() {
         // URIを受け取る
         val uriString = intent.getStringExtra(MainActivity.EXTRA_DOT_IMAGE)
         uriString?.let { uri ->
+            // InputStreamを開いてビットマップを読み込む
             val inputStream = contentResolver.openInputStream(Uri.parse(uri))
-            val selectedBitmap = BitmapFactory.decodeStream(inputStream)
+            val selectedBitmap = BitmapFactory.decodeStream(inputStream) // decodeStreamを使用
             drawingView.loadBitmap(selectedBitmap) // DrawingViewにBitmapを読み込む
         }
 
@@ -122,8 +143,28 @@ class PaintingActivity : AppCompatActivity() {
 
         // 完成ボタンのクリックリスナー設定
         completeButton.setOnClickListener {
-            uploadImage()  // 画像を Firebase にアップロード
+            if (!drawingView.isBitmapLoaded) {
+                Log.d("PaintingActivity", "タッチイベントを受け取ったが、ビットマップが読み込まれていません")
+                return@setOnClickListener // 修正：リスナーの戻り値を正しく扱う
+            }
+
+            uploadImage()
             completeButton.visibility = View.GONE // ボタンを非表示にする
+
+            val bitmap = drawingView.getBitmap() // Bitmapを取得
+            // BitmapをByteArrayに変換
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            val byteArray = stream.toByteArray()
+
+            // Intentで次のアクティビティに渡す
+            val intent = Intent(this, Result::class.java)
+            intent.putExtra("bitmap", byteArray)
+            startActivity(intent)
+        }
+
+        deathbutton.setOnClickListener {
+            drawingView.toggleImageVisibility() // 画像の表示/非表示を切り替える
         }
     }
 
@@ -143,10 +184,10 @@ class PaintingActivity : AppCompatActivity() {
 
         uploadTask.addOnSuccessListener {
             // アップロード成功時に画像の URL を取得
-            imageRef.downloadUrl.addOnSuccessListener { uri:Uri ->
+            imageRef.downloadUrl.addOnSuccessListener { uri: Uri ->
                 saveImageUrlToDatabase(uri.toString())
             }
-        }.addOnFailureListener { exception:Exception ->
+        }.addOnFailureListener { exception: Exception ->
             // エラーハンドリング
             exception.printStackTrace()
         }
@@ -215,5 +256,4 @@ class PaintingActivity : AppCompatActivity() {
             }
         }.start()
     }
-
 }
