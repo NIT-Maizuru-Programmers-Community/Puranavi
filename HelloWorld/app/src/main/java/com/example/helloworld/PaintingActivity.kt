@@ -4,16 +4,16 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
-import android.os.StrictMode
+import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
-import android.widget.ImageView
-import android.widget.ProgressBar
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.transition.Transition
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
@@ -22,32 +22,28 @@ import com.larswerkman.holocolorpicker.ColorPicker
 import com.larswerkman.holocolorpicker.OpacityBar
 import com.larswerkman.holocolorpicker.SaturationBar
 import com.larswerkman.holocolorpicker.SVBar
-import java.io.ByteArrayOutputStream
-import android.widget.Toast
 import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
+import java.io.PrintWriter
 import java.net.Socket
-import java.net.SocketTimeoutException
 import android.content.Intent
-import com.squareup.picasso.Picasso
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.transition.Transition
-import android.graphics.drawable.Drawable
-import android.util.Log
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 
 class PaintingActivity : AppCompatActivity() {
     private lateinit var textView: TextView
     private lateinit var savingsProgressBar: ProgressBar // プログレスバーのプロパティ
     private val serverIP = "172.20.10.13" // ArduinoのIPアドレス
     private val serverPort = 80           // Arduinoのポート番号
+    private lateinit var socket: Socket
+    private lateinit var output: PrintWriter
+    private lateinit var input: BufferedReader
 
     private var accumulatedData = 0 //受け取った数字を累積する変数
-
     private var currentColor: Int = Color.BLACK
     private lateinit var drawingView: DrawingView
     private lateinit var completeButton: Button
-    private lateinit var deathbutton:Button
+    private lateinit var deathbutton: Button
 
     // Firebase Realtime Database と Firebase Storage の参照を保持
     private lateinit var database: DatabaseReference
@@ -73,7 +69,10 @@ class PaintingActivity : AppCompatActivity() {
 
         drawingView = findViewById(R.id.drawingView)
         deathbutton = findViewById(R.id.btndeath)
-        completeButton = findViewById(R.id.completeButton)  // 完成ボタンを取得
+        completeButton = findViewById(R.id.completebutton)  // 完成ボタンを取得
+
+        completeButton.visibility = View.GONE // 完成ボタンを初期状態で非表示にする
+
         val colorPicker = findViewById<ColorPicker>(R.id.color_picker)
         val svBar = findViewById<SVBar>(R.id.svbar)
         val opacityBar = findViewById<OpacityBar>(R.id.opacitybar)
@@ -85,26 +84,26 @@ class PaintingActivity : AppCompatActivity() {
 
         if (imageUri != null) {
             Glide.with(this)
-                .asBitmap() // Bitmap形式で読み込む
+                .asBitmap()
                 .load(Uri.parse(imageUri))
+                .skipMemoryCache(true) // メモリキャッシュをスキップ
+                .diskCacheStrategy(DiskCacheStrategy.NONE) // ディスクキャッシュもスキップ
                 .into(object : CustomTarget<Bitmap>() {
                     override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
-                        drawingView.loadBitmap(resource) // DrawingViewにBitmapを読み込む
+                        drawingView.loadBitmap(resource,targetAmount) // 最新画像をDrawingViewに読み込む
                     }
                     override fun onLoadCleared(placeholder: Drawable?) {
                         // 必要に応じてリソースを解放する処理
                     }
                 })
+
         } else {
             Toast.makeText(this, "画像の読み込みに失敗しました", Toast.LENGTH_SHORT).show()
         }
 
+
         targetAmount = intent.getIntExtra("targetAmount", 0) //前の画面のtargetAmountを取得
         accumulatedData = 0 //目標金額の初期設定
-
-        // ネットワーク操作を許可する（デモ用の実装）
-        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
 
         connectToArduino()
 
@@ -119,15 +118,6 @@ class PaintingActivity : AppCompatActivity() {
             drawingView.changeColor(currentColor)  // 色を変更する
         }
 
-        // URIを受け取る
-        val uriString = intent.getStringExtra(MainActivity.EXTRA_DOT_IMAGE)
-        uriString?.let { uri ->
-            // InputStreamを開いてビットマップを読み込む
-            val inputStream = contentResolver.openInputStream(Uri.parse(uri))
-            val selectedBitmap = BitmapFactory.decodeStream(inputStream) // decodeStreamを使用
-            drawingView.loadBitmap(selectedBitmap) // DrawingViewにBitmapを読み込む
-        }
-
         // 色確定ボタン
         confirmButton.setOnClickListener {
             drawingView.changeColor(currentColor)
@@ -136,8 +126,9 @@ class PaintingActivity : AppCompatActivity() {
         // DrawingView のリスナー設定（塗り絵完成時にボタンを表示）
         drawingView.setOnAllTilesFilledListener(object : DrawingView.OnAllTilesFilledListener {
             override fun onAllTilesFilled() {
-                // 完成ボタンを表示
-                completeButton.visibility = View.VISIBLE
+                runOnUiThread {
+                    completeButton.visibility = View.VISIBLE // すべてのタイルが塗り終わった時にボタンを表示
+                }
             }
         })
 
@@ -164,8 +155,50 @@ class PaintingActivity : AppCompatActivity() {
         }
 
         deathbutton.setOnClickListener {
-            drawingView.toggleImageVisibility() // 画像の表示/非表示を切り替える
+            drawingView.toggleTileBorders() // 画像の表示/非表示を切り替える
         }
+    }
+
+    private fun connectToArduino() {
+        Thread {
+            try {
+                // サーバーに接続
+                socket = Socket(serverIP, serverPort)
+                output = PrintWriter(socket.getOutputStream(), true)
+                input = BufferedReader(InputStreamReader(socket.getInputStream()))
+
+                while (true) {
+                    // Arduinoからデータを受信
+                    val data = input.readLine()?.toIntOrNull()
+                    data?.let {
+                        accumulatedData += it
+                        runOnUiThread {
+                            if (accumulatedData > targetAmount) {
+                                accumulatedData = targetAmount
+                            }
+                            val progressPercentage = (accumulatedData.toFloat() / targetAmount * 100).toInt().coerceIn(0, 100)
+                            val progress = accumulatedData.coerceIn(0, targetAmount)
+                            savingsProgressBar.progress = progress
+                            textView.text = "貯金額: $accumulatedData 円 / 目標金額： $targetAmount 円 ($progressPercentage%)"
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                runOnUiThread {
+                    Toast.makeText(this, "接続エラー: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            } finally {
+                // 接続をクリーンアップ
+                try {
+                    output.close()
+                    input.close()
+                    socket.close()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }.start()
     }
 
     // 画像を Firebase Storage にアップロードするメソッド
@@ -209,51 +242,5 @@ class PaintingActivity : AppCompatActivity() {
             // エラーハンドリング
             exception.printStackTrace()
         }
-    }
-
-    private fun connectToArduino() {
-        Thread {
-            try {
-                val socket = Socket(serverIP, serverPort)
-                socket.soTimeout = 5000
-                val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
-
-                runOnUiThread {
-                    Toast.makeText(this, "Arduinoに接続しました", Toast.LENGTH_SHORT).show()
-                }
-
-                while (true) {
-                    try {
-                        val data = reader.readLine()?.toIntOrNull() // データを整数に変換
-                        if (data != null) {
-                            accumulatedData += data // 累積
-                            runOnUiThread {
-                                // 累積データが目標金額を超えないように調整
-                                if (accumulatedData > targetAmount) {
-                                    accumulatedData = targetAmount
-                                }
-
-                                // プログレスバーの進捗率を計算して設定
-                                val progressPercentage = (accumulatedData.toFloat() / targetAmount * 100).toInt().coerceIn(0, 100)
-                                val progress = accumulatedData.coerceIn(0, targetAmount)
-                                savingsProgressBar.progress = progress
-
-                                // テキストビューに貯金額と進捗率を表示
-                                textView.text = "貯金額: $accumulatedData 円 / 目標金額： $targetAmount 円 ($progressPercentage%)"
-                            }
-                        } else {
-                            break
-                        }
-                    } catch (e: SocketTimeoutException) {
-                        break
-                    }
-                }
-                socket.close()
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "接続エラー: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
     }
 }

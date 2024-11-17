@@ -1,17 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal">
 
+    <!-- ImageView を画面の中央に配置 -->
     <ImageView
-        android:id="@+id/result"
+        android:id="@+id/imageView"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scaleType="fitCenter"
+        android:contentDescription="Completed Painting" />
+
+    <!-- 塗り絵完成のメッセージ -->
+    <TextView
+        android:id="@+id/completeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:src="@drawable/regiscan_type_s"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="16dp"
+        android:text="おめでとう！塗り絵が完成しました！ぷらもばにアップロードされました"
+        android:textAlignment="center"
+        android:textSize="16sp" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- タイトル画面に戻るボタン -->
+    <Button
+        android:id="@+id/button_back_to_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="タイトル画面に戻る" />
+
+</LinearLayout>

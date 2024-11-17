@@ -22,6 +22,7 @@ import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import java.io.FileNotFoundException
 import android.os.Environment
+import androidx.compose.ui.unit.Constraints
 import java.io.File
 import java.io.FileOutputStream
 
@@ -36,6 +37,16 @@ class CheckActivity : ComponentActivity() {
 
         val imageView: ImageView = findViewById(R.id.imageView) // 画像を表示するImageViewを取得
         val targetAmount = intent.getIntExtra("targetAmount", 0) // 前の画面のtargetAmountを取得
+
+        // ピクセルアート化とCannyエッジ検出の処理
+        val pixelSize = when{
+            targetAmount in 1..3000 -> Constants.TILE_SIZE_C
+            targetAmount in 3001..6000 ->Constants.TILE_SIZE_UC
+            targetAmount in 6001..15000 ->Constants.TILE_SIZE_R
+            targetAmount in 15001..30000 ->Constants.TILE_SIZE_SR
+            targetAmount in 30001..50000 ->Constants.TILE_SIZE_UR
+            else -> 0
+        }
 
         // ストレージの書き込み権限を確認
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -59,7 +70,7 @@ class CheckActivity : ComponentActivity() {
                 val bitmap = BitmapFactory.decodeStream(contentResolver.openInputStream(Uri.parse(imageUri)))
 
                 // OpenCV処理の適用
-                processedBitmap = processImage(bitmap)
+                processedBitmap = processImage(bitmap,pixelSize)
                 imageView.setImageBitmap(processedBitmap)
 
             } catch (e: FileNotFoundException) {
@@ -87,11 +98,11 @@ class CheckActivity : ComponentActivity() {
         }
     }
 
-    private fun processImage(bitmap: Bitmap): Bitmap {
+    private fun processImage(bitmap: Bitmap,pixelSize: Int): Bitmap {
         val originalMat = Mat()
         Utils.bitmapToMat(bitmap, originalMat)
 
-        // 固定サイズにリサイズ
+        // 固定サイズにリサイズ（元サイズ1024×1024）
         val fixedSize = Size(1024.0, 1024.0)
         val resizedMat = Mat()
         Imgproc.resize(originalMat, resizedMat, fixedSize)
@@ -100,9 +111,6 @@ class CheckActivity : ComponentActivity() {
         val grayMat = Mat()
         Imgproc.cvtColor(resizedMat, grayMat, Imgproc.COLOR_BGR2GRAY)
 
-        // ピクセルアート化とCannyエッジ検出の処理
-        val pixelSize = 64
-        val gridSize = 32
         val smallImage = Mat()
         Imgproc.resize(grayMat, smallImage, Size(pixelSize.toDouble(), pixelSize.toDouble()), 0.0, 0.0, Imgproc.INTER_NEAREST)
         val pixelArtMat = Mat()
@@ -136,28 +144,31 @@ class CheckActivity : ComponentActivity() {
         val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(10.0, 10.0))
         Imgproc.dilate(edgesColorMat, edgesColorMat, kernel)
 
-        val gridThickness = 1
-        for (i in 0 until resultMat.rows()) {
-            for (j in 0 until resultMat.cols()) {
-                if (i % gridSize <= gridThickness || j % gridSize <= gridThickness) {
-                    resultMat.put(i, j, byteArrayOf(0, 0, 0))
-                }
-            }
-        }
-
         val resultBitmap = Bitmap.createBitmap(resultMat.cols(), resultMat.rows(), Bitmap.Config.ARGB_8888)
         Utils.matToBitmap(resultMat, resultBitmap)
 
-        return resultBitmap
+        // 生成されたビットマップを小さくリサイズ（例として800x800に変更）
+        val resizedBitmap = Bitmap.createScaledBitmap(resultBitmap, 800, 800, true)
+
+        return resizedBitmap
     }
 
     // Bitmapを保存するメソッド
     private fun saveBitmapToFile(bitmap: Bitmap): Uri {
+        // 前回の画像ファイルを削除
+        val previousFile = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "processed_image.png")
+        if (previousFile.exists()) {
+            previousFile.delete()
+        }
+
+        // 新たに保存
         val file = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "processed_image.png")
         val outputStream = FileOutputStream(file)
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
         outputStream.flush()
         outputStream.close()
+
         return Uri.fromFile(file)
     }
+
 }

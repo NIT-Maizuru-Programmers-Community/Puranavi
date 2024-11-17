@@ -27,12 +27,13 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     private var tiles: MutableList<Tile> = mutableListOf() // タイルを保持するリスト
-    private var tileSize: Float = 50f // タイルのサイズ
+    var targetAmount:Int = 0
     private var bitmap: Bitmap? = null
     private val bitmapPaint = Paint(Paint.DITHER_FLAG)
 
     var isBitmapLoaded: Boolean = false // ビットマップが読み込まれたかのフラグ
-    var isImageVisible: Boolean = true // 画像を表示するかどうかのフラグ
+    private var isImageVisible: Boolean = true // 画像を表示するかどうかのフラグ
+    private var showTileBorders: Boolean = true //枠線を表示するか否か
 
     // インターフェースを定義
     interface OnAllTilesFilledListener {
@@ -47,8 +48,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     }
 
     // 画像を読み込むメソッド
-    fun loadBitmap(bitmap: Bitmap) {
+    fun loadBitmap(bitmap: Bitmap,targetAmount:Int) {
         this.bitmap = bitmap
+        this.targetAmount = targetAmount
         isBitmapLoaded = true // ビットマップを読み込んだらフラグを更新
         Log.d("DrawingView", "ビットマップが読み込まれました: 幅=${bitmap.width}, 高さ=${bitmap.height}")
         createTiles() // タイルを生成
@@ -68,14 +70,29 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
             val width = bmp.width
             val height = bmp.height
 
-            for (y in 0 until height step tileSize.toInt()) {
-                for (x in 0 until width step tileSize.toInt()) {
-                    val rect = RectF(
-                        x.toFloat(), y.toFloat(),
-                        (x + tileSize).coerceAtMost(width.toFloat()),
-                        (y + tileSize).coerceAtMost(height.toFloat())
-                    )
-                    tiles.add(Tile(rect))
+            // 一辺のタイルの数からタイルのサイズを計算
+            var tileCountPerSide = when{
+                targetAmount in 1..3000 -> Constants.TILE_SIZE_C
+                targetAmount in 3001..6000 -> Constants.TILE_SIZE_UC
+                targetAmount in 6001..15000 -> Constants.TILE_SIZE_R
+                targetAmount in 15001..30000 -> Constants.TILE_SIZE_SR
+                targetAmount in 30001..50000 -> Constants.TILE_SIZE_UR
+                else-> 0
+            }
+            val tileSize = minOf(width, height) / tileCountPerSide.toFloat()
+
+            val columns = (width / tileSize).toInt()
+            val rows = (height / tileSize).toInt()
+
+            for (y in 0 until rows) {
+                for (x in 0 until columns) {
+                    val left = x * tileSize
+                    val top = y * tileSize
+                    val right = left + tileSize
+                    val bottom = top + tileSize
+
+                    val rectF = RectF(left, top, right, bottom)
+                    tiles.add(Tile(rectF))
                 }
             }
             Log.d("DrawingView", "生成されたタイルの数: ${tiles.size}")
@@ -86,7 +103,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
     private fun checkCompletion() {
         if (tiles.all { it.isFilled }) {
             listener?.onAllTilesFilled() // リスナーを呼び出す
-
             // 塗り絵完了のメッセージを表示
             Toast.makeText(context, "塗り絵が完成しました！", Toast.LENGTH_SHORT).show()
         }
@@ -110,7 +126,6 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
                     tile.color = paint.color // 選択した色でタイルを塗りつぶす
                     tile.isFilled = true // タイルが塗られたことを記録
                     Log.d("DrawingView", "タイルの位置: (${tile.rect.left}, ${tile.rect.top}) 塗りつぶし色: ${tile.color}")
-                    Log.d("DrawingView", "タイルが塗られたよ")
                     invalidate() // 再描画
                     checkCompletion() // 完成状態を確認
                 }
@@ -133,23 +148,19 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         tiles.forEach { tile ->
             // 塗られたタイルを描画
             if (tile.isFilled) {
-                canvas.drawRect(tile.rect, Paint().apply {
-                    color = tile.color
-                    style = Paint.Style.FILL
-                })
+                tilePaint.color = tile.color
+                canvas.drawRect(tile.rect, tilePaint)
             }
             // タイルの枠線を描画
-            canvas.drawRect(tile.rect, Paint().apply {
-                color = Color.BLACK
-                style = Paint.Style.STROKE
-                strokeWidth = 2f
-            })
+            if(showTileBorders){
+                canvas.drawRect(tile.rect, tileBorderPaint)
+            }
         }
     }
 
-    // 画像の表示/非表示を切り替えるメソッド
-    fun toggleImageVisibility() {
-        isImageVisible = !isImageVisible
+    // 枠線を表示・非表示するか否かの処理
+    fun toggleTileBorders() {
+        showTileBorders = !showTileBorders
         invalidate() // 再描画
     }
 
@@ -158,5 +169,9 @@ class DrawingView(context: Context, attrs: AttributeSet) : View(context, attrs) 
         val canvas = Canvas(bitmap)
         draw(canvas) // 自身を描画
         return bitmap
+    }
+
+    fun areAllTilesFilled():Boolean{
+        return tiles.all{it.isFilled}
     }
 }
