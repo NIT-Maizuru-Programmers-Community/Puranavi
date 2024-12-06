@@ -1,9 +1,9 @@
 # NeoPainting
-2024年Heros League出場作品 「ぷならび.pig -貯金箱×ぬりえによる目標達成ツール-」
+2024年Heros League出場作品 **ぷならび.pig -貯金箱×ぬりえによる目標達成ツール-**
 開発用リポジトリ
 
 ## OverView
-ぷらなび.pigは貯金箱とぬりえとタブレットアプリのぬりえを利用した貯金の目標達成ツールです。
+ぷらなび.pigは**貯金箱とタブレットアプリのぬりえ**を利用した貯金の目標達成ツールです。
 
 ## Technology
 開発プラットフォーム:Android Studio、firebase、openCV、Arduino
