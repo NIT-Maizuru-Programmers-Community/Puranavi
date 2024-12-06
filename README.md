@@ -12,7 +12,7 @@
 # Author
 舞鶴工業高等専門学校　プログラマーズコミュニティ部
 
-・KATAOKA Tatsuki/3年電気情報工学科[Leader]　担当：スマホアプリ「ぷらもば」
+・KATAOKA Tatsuki/3年電気情報工学科　担当：スマホアプリ「ぷらもば」
 ・ROKUTA Kaoru/3年電気情報工学科　担当：タブレットアプリ「ぷらなび」
 ・YAMADA Nodoka/3年電気情報工学科　担当：貯金箱硬貨、紙幣認識部分、デザイン
 ・TSUKAMOTO Itsuki/2年電気情報工学科　担当：貯金箱外形、デザイン
