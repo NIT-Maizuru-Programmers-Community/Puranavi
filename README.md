@@ -6,8 +6,8 @@
 ぷらなび.pigは**貯金箱とタブレットアプリのぬりえ**を利用した貯金の目標達成ツールです。
 
 ## Technology
-開発プラットフォーム:Android Studio、firebase、openCV、Arduino
-使用言語：kotlin、Arduino言語(Java、C++)
+- 開発プラットフォーム:Android Studio、firebase、openCV、Arduino
+- 使用言語：kotlin、Arduino言語(Java、C++)
 
 ## Author
 舞鶴工業高等専門学校　プログラマーズコミュニティ部
